@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+python a1.py -d actor
 python a1.py -d collaboration
 python a1.py -d internet
 python a1.py -d powergrid

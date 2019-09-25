@@ -113,7 +113,11 @@ def plot_sp_dist(adj, dataset):
     sp = shortest_path(adj, directed=False, unweighted=True)
 
     sp_freq = Counter(sp.flatten())
-    sp_freq.pop(0)
+
+    if 0 in sp_freq.keys():
+        sp_freq.pop(0)
+    if np.inf in sp_freq.keys():
+        sp_freq.pop(np.inf)
 
     x = list(sp_freq.keys())
     y = np.log10(list(sp_freq.values()))
