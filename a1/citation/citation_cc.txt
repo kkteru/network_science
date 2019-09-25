@@ -1,1 +1,1 @@
-Number of components = 4432, number of node in GCC = 14
+Number of components = 4440, number of node in GCC = 21
