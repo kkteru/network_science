@@ -228,49 +228,6 @@ def get_ba_adj(num_nodes, num_links):
     # initial conditions
     # TODO : change the initial conditions
     nodes_list = list(np.arange(num_nodes))
-    source_nodes = list(np.arange(init_nodes))
-    target_nodes = list(np.arange(init_nodes))[1:] + list(np.arange(init_nodes))[:1]
-    # target_nodes = np.random.choice(nodes_list, size=init_nodes, replace=True).tolist()
-    nodes_degree = np.array([0] * num_nodes)
-    nodes_degree[:init_nodes] = 2
-
-    # build the graph
-    for t in tqdm(range(init_nodes, num_nodes)):
-        source_nodes += np.random.choice(nodes_list[t], size=num_links_per_iter, replace=False, p=(nodes_degree / np.sum(nodes_degree))[:t]).tolist()
-        target_nodes += [t] * num_links_per_iter
-
-        nodes_degree[source_nodes] += 1
-        nodes_degree[t] = num_links_per_iter
-
-    # create the adjacency matrix
-    adj = csc_matrix((np.ones(len(source_nodes), dtype=np.uint8), (source_nodes, target_nodes)), shape=(num_nodes, num_nodes))
-
-    # remove self loops
-    adj.setdiag(0)
-    adj.eliminate_zeros()
-
-    # ignore direction
-    adj += adj.T
-
-    # remove multi-edges
-    nz = adj.nonzero()
-    adj_simple = csc_matrix((np.ones(len(nz[0]), dtype=np.uint8), (nz[0], nz[1])), shape=(num_nodes, num_nodes))
-
-    return adj_simple
-
-
-def get_ba_adj1(num_nodes, num_links):
-
-    init_nodes = int((num_nodes + 1 - np.sqrt((num_nodes + 1)**2 - 4 * num_links)) / 2 + 1)
-    init_links = init_nodes
-
-    num_links_per_iter = int((num_links - init_links) / (num_nodes - init_nodes))
-
-    print(init_nodes, init_links, num_links_per_iter)
-
-    # initial conditions
-    # TODO : change the initial conditions
-    nodes_list = list(np.arange(num_nodes))
     source_nodes = np.arange(init_nodes).tolist()
     target_nodes = list(np.arange(init_nodes))[1:] + list(np.arange(init_nodes))[:1]
     # target_nodes = np.random.choice(nodes_list, size=init_nodes, replace=True).tolist()
@@ -311,6 +268,121 @@ def get_ba_adj1(num_nodes, num_links):
     return adj_simple
 
 
+def get_ba_adj_mod1(num_nodes, num_links):
+    '''
+    Add one link at a time
+    '''
+
+    init_nodes = int((num_nodes + 1 - np.sqrt((num_nodes + 1)**2 - 4 * num_links)) / 2 + 1)
+    init_links = init_nodes
+
+    num_links_per_iter = int((num_links - init_links) / (num_nodes - init_nodes))
+
+    print(init_nodes, init_links, num_links_per_iter)
+
+    # initial conditions
+    # TODO : change the initial conditions
+    nodes_list = list(np.arange(num_nodes))
+    source_nodes = np.arange(init_nodes).tolist()
+    target_nodes = list(np.arange(init_nodes))[1:] + list(np.arange(init_nodes))[:1]
+    # target_nodes = np.random.choice(nodes_list, size=init_nodes, replace=True).tolist()
+    # nodes_degree = np.array([0] * num_nodes)
+    # nodes_degree[:init_nodes] = 2
+
+    # build the graph
+    for t in tqdm(range(init_nodes, num_nodes)):
+        for _ in range(num_links_per_iter):
+            new_source_nodes = []
+
+            node = np.random.randint(2 * len(source_nodes))
+
+            if node < len(source_nodes):
+                new_source_nodes.append(source_nodes[node])
+            else:
+                new_source_nodes.append(target_nodes[node - len(source_nodes)])
+
+            source_nodes += new_source_nodes
+            target_nodes += [t]
+
+        # nodes_degree[source_nodes] += 1
+        # nodes_degree[t] = num_links_per_iter
+
+    # create the adjacency matrix
+    adj = csc_matrix((np.ones(len(source_nodes), dtype=np.uint8), (source_nodes, target_nodes)), shape=(num_nodes, num_nodes))
+
+    # remove self loops
+    adj.setdiag(0)
+    adj.eliminate_zeros()
+
+    # ignore direction
+    adj += adj.T
+
+    # remove multi-edges
+    nz = adj.nonzero()
+    adj_simple = csc_matrix((np.ones(len(nz[0]), dtype=np.uint8), (nz[0], nz[1])), shape=(num_nodes, num_nodes))
+
+    return adj_simple
+
+
+def get_ba_adj_mod2(num_nodes, num_links, step=1):
+    '''
+    Add multiple nodes simultaneously
+    '''
+
+    init_nodes = int((num_nodes + 1 - np.sqrt((num_nodes + 1)**2 - 4 * num_links)) / 2 + 1)
+    init_links = init_nodes
+
+    num_links_per_iter = int((num_links - init_links) / (num_nodes - init_nodes))
+
+    print(init_nodes, init_links, num_links_per_iter)
+
+    # initial conditions
+    # TODO : change the initial conditions
+    nodes_list = list(np.arange(num_nodes))
+    source_nodes = np.arange(init_nodes).tolist()
+    target_nodes = list(np.arange(init_nodes))[1:] + list(np.arange(init_nodes))[:1]
+    # target_nodes = np.random.choice(nodes_list, size=init_nodes, replace=True).tolist()
+    # nodes_degree = np.array([0] * num_nodes)
+    # nodes_degree[:init_nodes] = 2
+
+    # build the graph
+    for t in tqdm(range(init_nodes, num_nodes, step)):
+        new_source_nodes = []
+        new_target_nodes = []
+        for i in range(step):
+            nodes = np.random.randint(2 * len(source_nodes), size=num_links_per_iter).tolist()
+
+            for node in nodes:
+                if node < len(source_nodes):
+                    new_source_nodes.append(source_nodes[node])
+                else:
+                    new_source_nodes.append(target_nodes[node - len(source_nodes)])
+            new_target_nodes += [t + i] * num_links_per_iter
+
+        source_nodes += new_source_nodes
+        target_nodes += new_target_nodes
+
+        # nodes_degree[source_nodes] += 1
+        # nodes_degree[t] = num_links_per_iter
+
+    # create the adjacency matrix
+    num_nodes = np.max(new_target_nodes) + 1
+    adj = csc_matrix((np.ones(len(source_nodes), dtype=np.uint8), (source_nodes, target_nodes)), shape=(num_nodes, num_nodes))
+
+    # remove self loops
+    adj.setdiag(0)
+    adj.eliminate_zeros()
+
+    # ignore direction
+    adj += adj.T
+
+    # remove multi-edges
+    nz = adj.nonzero()
+    adj_simple = csc_matrix((np.ones(len(nz[0]), dtype=np.uint8), (nz[0], nz[1])), shape=(num_nodes, num_nodes))
+
+    return adj_simple
+
+
 def main(params):
 
     print(f'Computing stats for {params.dataset}')
@@ -323,27 +395,27 @@ def main(params):
 
     print(f'Total nodes = {tot_nodes}, total links = {tot_links}')
 
-    plot_degree_dist(adj, params.dataset)
-    plot_degree_corr(adj, params.dataset)
+    # plot_degree_dist(adj, params.dataset)
+    # plot_degree_corr(adj, params.dataset)
 
-    if adj.shape[0] > 5000:
-        sampled_nodes = np.random.choice(np.arange(adj.shape[0]), size=5000, replace=False)
-        adj = adj[sampled_nodes, :][:, sampled_nodes]
+    # if adj.shape[0] > 5000:
+    #     sampled_nodes = np.random.choice(np.arange(adj.shape[0]), size=5000, replace=False)
+    #     adj = adj[sampled_nodes, :][:, sampled_nodes]
 
-        print(f'Sampled nodes = {adj.shape[0]}, Sampled links = {adj.sum()}')
+    #     print(f'Sampled nodes = {adj.shape[0]}, Sampled links = {adj.sum()}')
 
-    plot_cc_dist(adj, params.dataset)
-    plot_degree_cc_corr(adj, params.dataset)
-    plot_sp_dist(adj, params.dataset)
-    get_connected_comp(adj, params.dataset)
+    # plot_cc_dist(adj, params.dataset)
+    # plot_degree_cc_corr(adj, params.dataset)
+    # plot_sp_dist(adj, params.dataset)
+    # get_connected_comp(adj, params.dataset)
 
-    plot_eig_dist(adj, params.dataset)
+    # plot_eig_dist(adj, params.dataset)
 
     ####################
     print(f'Computing stats for {params.dataset}_ba')
     print('========================')
 
-    ba_adj = get_ba_adj1(num_nodes=tot_nodes, num_links=tot_links // 2)
+    ba_adj = get_ba_adj(num_nodes=tot_nodes, num_links=tot_links // 2)
 
     print(f'Total nodes in BA model = {ba_adj.shape[0]}, total links in BA model = {ba_adj.sum()}')
 
@@ -361,7 +433,55 @@ def main(params):
     plot_sp_dist(ba_adj, params.dataset + '_ba')
     get_connected_comp(ba_adj, params.dataset + '_ba')
 
-    plot_eig_dist(adj, params.dataset + '_ba')
+    plot_eig_dist(ba_adj, params.dataset + '_ba')
+
+    ####################
+    print(f'Computing stats for {params.dataset}_ba1')
+    print('========================')
+
+    ba_adj1 = get_ba_adj_mod1(num_nodes=tot_nodes, num_links=tot_links // 2)
+
+    print(f'Total nodes in BA1 model = {ba_adj1.shape[0]}, total links in BA model = {ba_adj1.sum()}')
+
+    plot_degree_dist(ba_adj1, params.dataset + '_ba1')
+    plot_degree_corr(ba_adj1, params.dataset + '_ba1')
+
+    if ba_adj1.shape[0] > 5000:
+        sampled_nodes = np.random.choice(np.arange(ba_adj1.shape[0]), size=5000, replace=False)
+        ba_adj1 = ba_adj1[sampled_nodes, :][:, sampled_nodes]
+
+        print(f'Sampled nodes = {ba_adj1.shape[0]}, Sampled links = {ba_adj1.sum()}')
+
+    plot_cc_dist(ba_adj1, params.dataset + '_ba1')
+    plot_degree_cc_corr(ba_adj1, params.dataset + '_ba1')
+    plot_sp_dist(ba_adj1, params.dataset + '_ba1')
+    get_connected_comp(ba_adj1, params.dataset + '_ba1')
+
+    plot_eig_dist(ba_adj1, params.dataset + '_ba1')
+
+    ####################
+    print(f'Computing stats for {params.dataset}_ba2')
+    print('========================')
+
+    ba_adj2 = get_ba_adj_mod2(num_nodes=tot_nodes, num_links=tot_links // 2, step=1000)
+
+    print(f'Total nodes in BA2 model = {ba_adj2.shape[0]}, total links in BA model = {ba_adj2.sum()}')
+
+    plot_degree_dist(ba_adj2, params.dataset + '_ba2')
+    plot_degree_corr(ba_adj2, params.dataset + '_ba2')
+
+    if ba_adj2.shape[0] > 5000:
+        sampled_nodes = np.random.choice(np.arange(ba_adj2.shape[0]), size=5000, replace=False)
+        ba_adj2 = ba_adj2[sampled_nodes, :][:, sampled_nodes]
+
+        print(f'Sampled nodes = {ba_adj2.shape[0]}, Sampled links = {ba_adj2.sum()}')
+
+    plot_cc_dist(ba_adj2, params.dataset + '_ba2')
+    plot_degree_cc_corr(ba_adj2, params.dataset + '_ba2')
+    plot_sp_dist(ba_adj2, params.dataset + '_ba2')
+    get_connected_comp(ba_adj2, params.dataset + '_ba2')
+
+    plot_eig_dist(ba_adj2, params.dataset + '_ba2')
 
 
 if __name__ == "__main__":
@@ -377,5 +497,9 @@ if __name__ == "__main__":
         os.makedirs(params.dataset)
     if not os.path.exists(params.dataset + '_ba'):
         os.makedirs(params.dataset + '_ba')
+    if not os.path.exists(params.dataset + '_ba1'):
+        os.makedirs(params.dataset + '_ba1')
+    if not os.path.exists(params.dataset + '_ba2'):
+        os.makedirs(params.dataset + '_ba2')
 
     main(params)
