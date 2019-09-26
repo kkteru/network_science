@@ -399,21 +399,21 @@ def main(params):
 
     print(f'Total nodes = {tot_nodes}, total links = {tot_links}')
 
-    # plot_degree_dist(adj, params.dataset)
-    # plot_degree_corr(adj, params.dataset)
+    plot_degree_dist(adj, params.dataset)
+    plot_degree_corr(adj, params.dataset)
 
-    # if adj.shape[0] > 5000:
-    #     sampled_nodes = np.random.choice(np.arange(adj.shape[0]), size=5000, replace=False)
-    #     adj = adj[sampled_nodes, :][:, sampled_nodes]
+    if adj.shape[0] > 5000:
+        sampled_nodes = np.random.choice(np.arange(adj.shape[0]), size=5000, replace=False)
+        adj = adj[sampled_nodes, :][:, sampled_nodes]
 
-    #     print(f'Sampled nodes = {adj.shape[0]}, Sampled links = {adj.sum()}')
+        print(f'Sampled nodes = {adj.shape[0]}, Sampled links = {adj.sum()}')
 
-    # plot_cc_dist(adj, params.dataset)
-    # plot_degree_cc_corr(adj, params.dataset)
-    # plot_sp_dist(adj, params.dataset)
-    # get_connected_comp(adj, params.dataset)
+    plot_cc_dist(adj, params.dataset)
+    plot_degree_cc_corr(adj, params.dataset)
+    plot_sp_dist(adj, params.dataset)
+    get_connected_comp(adj, params.dataset)
 
-    # plot_eig_dist(adj, params.dataset)
+    plot_eig_dist(adj, params.dataset)
 
     ####################
     print(f'Computing stats for {params.dataset}_ba')
