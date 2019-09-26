@@ -119,12 +119,16 @@ def plot_sp_dist(adj, dataset):
     if np.inf in sp_freq.keys():
         sp_freq.pop(np.inf)
 
+    sum_of_numbers = sum([number * count for number, count in sp_freq.items()])
+    count = sum([count for count in sp_freq.values()])
+    sp_mean = sum_of_numbers / count
+
     x = list(sp_freq.keys())
     y = np.log10(list(sp_freq.values()))
 
     fig = plt.figure(figsize=(12, 8))
     plt.plot(x, y, 'o')
-    plt.title(f'Shortest path distribution of {dataset} graph (avg: {np.mean(sp)})')
+    plt.title(f'Shortest path distribution of {dataset} graph (avg: {sp_mean})')
 
     plt.legend(['True CC distribution'])
 
