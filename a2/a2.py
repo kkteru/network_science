@@ -17,6 +17,12 @@ def get_graph(dataset):
     graph = nx.read_gml(f'real-classic/{dataset}.gml', label='id')
     node_comm = np.array([graph.nodes[v]['value'] for v in graph])
 
+    largest_cc = max(nx.connected_components(graph), key=len)
+
+    graph = graph.subgraph(largest_cc)
+
+    node_comm = node_comm[list(largest_cc)]
+
     return nx.Graph(graph), node_comm
 
 
