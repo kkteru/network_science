@@ -111,12 +111,14 @@ def main(params):
     print([len(c) for c in sorted(nx.connected_components(graph), key=len, reverse=True)])
 
     greedy_comm = get_greedy_modularity_communities(graph)
-    gn_comm = get_girvan_newman_communities(graph)
+    if params.dataset != 'pubmed':
+        gn_comm = get_girvan_newman_communities(graph)
     clique_comm = get_clique_communities(graph)
 
     with open(f'{params.dataset}.txt', "w+") as f:
         f.write(f"Greedy -- NMI={normalized_mutual_info_score(comm, greedy_comm, average_method='arithmetic')}; ARI={adjusted_rand_score(comm, greedy_comm)}\n")
-        f.write(f"Girvan-Newman -- NMI={normalized_mutual_info_score(comm, gn_comm, average_method='arithmetic')}; ARI={adjusted_rand_score(comm, gn_comm)}\n")
+        if params.dataset != 'pubmed':
+            f.write(f"Girvan-Newman -- NMI={normalized_mutual_info_score(comm, gn_comm, average_method='arithmetic')}; ARI={adjusted_rand_score(comm, gn_comm)}\n")
         f.write(f"Clique -- NMI={normalized_mutual_info_score(comm, clique_comm, average_method='arithmetic')}; ARI={adjusted_rand_score(comm, clique_comm)}\n")
 
 
