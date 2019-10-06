@@ -21,7 +21,7 @@ def get_graph(dataset):
 
     graph = graph.subgraph(largest_cc)
 
-    node_comm = node_comm[list(largest_cc)]
+    node_comm = node_comm[np.array(list(largest_cc))-1]
 
     return nx.Graph(graph), node_comm
 
@@ -113,13 +113,13 @@ def main(params):
     greedy_comm = get_greedy_modularity_communities(graph)
     if params.dataset != 'pubmed':
         gn_comm = get_girvan_newman_communities(graph)
-    clique_comm = get_clique_communities(graph)
+#    clique_comm = get_clique_communities(graph)
 
     with open(f'{params.dataset}.txt', "w+") as f:
         f.write(f"Greedy -- NMI={normalized_mutual_info_score(comm, greedy_comm, average_method='arithmetic')}; ARI={adjusted_rand_score(comm, greedy_comm)}\n")
         if params.dataset != 'pubmed':
             f.write(f"Girvan-Newman -- NMI={normalized_mutual_info_score(comm, gn_comm, average_method='arithmetic')}; ARI={adjusted_rand_score(comm, gn_comm)}\n")
-        f.write(f"Clique -- NMI={normalized_mutual_info_score(comm, clique_comm, average_method='arithmetic')}; ARI={adjusted_rand_score(comm, clique_comm)}\n")
+ #       f.write(f"Clique -- NMI={normalized_mutual_info_score(comm, clique_comm, average_method='arithmetic')}; ARI={adjusted_rand_score(comm, clique_comm)}\n")
 
 
 if __name__ == '__main__':
