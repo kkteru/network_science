@@ -8,9 +8,18 @@ from networkx.algorithms.community import LFR_benchmark_graph
 from networkx.algorithms.community import girvan_newman
 from networkx.algorithms.community import greedy_modularity_communities
 from networkx.algorithms.community import k_clique_communities
+from networkx.algorithms.community import modularity
 
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
+
+
+def get_karate_network_data():
+    graph = nx.karate_club_graph()
+
+    node_comm = np.array([graph.nodes[v]['club'] for v in graph])
+
+    return nx.Graph(graph), node_comm
 
 
 def get_graph(dataset):
@@ -21,7 +30,7 @@ def get_graph(dataset):
 
     graph = graph.subgraph(largest_cc)
 
-    node_comm = node_comm[np.array(list(largest_cc))-1]
+    node_comm = node_comm[np.array(list(largest_cc)) - 1]
 
     return nx.Graph(graph), node_comm
 
@@ -60,13 +69,15 @@ def get_greedy_modularity_communities(graph):
 
     comm = greedy_modularity_communities(graph)
 
+    mod = modularity(graph, comm)
+
     node_gr_comm = np.zeros(max(graph.nodes) + 1)
 
     for i, c in enumerate(comm):
         for node in c:
             node_gr_comm[node] = i + 1
 
-    return node_gr_comm[list(graph.nodes)]
+    return node_gr_comm[list(graph.nodes)], mod
 
 
 def get_girvan_newman_communities(graph):
@@ -75,18 +86,25 @@ def get_girvan_newman_communities(graph):
 
     comm = tuple(sorted(c) for c in next(dendogram))
 
+    mod = modularity(graph, comm)
+
     node_gn_comm = np.zeros(max(graph.nodes) + 1)
 
     for i, c in enumerate(comm):
         for node in c:
             node_gn_comm[node] = i + 1
 
-    return node_gn_comm[list(graph.nodes)]
+    return node_gn_comm[list(graph.nodes)], mod
 
 
-def get_clique_communities(graph, k=3):
+def get_clique_communities(graph, k=4):
 
     comm = list(k_clique_communities(graph, k))
+
+    try:
+        mod = modularity(graph, comm)
+    except:
+        mod = 0
 
     node_cl_comm = np.zeros(max(graph.nodes) + 1)
 
@@ -94,7 +112,7 @@ def get_clique_communities(graph, k=3):
         for node in c:
             node_cl_comm[node] = i + 1
 
-    return node_cl_comm[list(graph.nodes)]
+    return node_cl_comm[list(graph.nodes)], mod
 
 
 def main(params):
@@ -105,21 +123,26 @@ def main(params):
         graph, comm = get_node_label_network_data(params.dataset)
     elif params.type == 'real':
         graph, comm = get_graph(params.dataset)
+    elif params.type == 'karate':
+        graph, comm = get_karate_network_data()
 
     print(f'Number of nodes in the graph = {len(graph)}')
     print('The components of the graph are as follows -- ')
     print([len(c) for c in sorted(nx.connected_components(graph), key=len, reverse=True)])
 
-    greedy_comm = get_greedy_modularity_communities(graph)
+    greedy_comm, greedy_mod = get_greedy_modularity_communities(graph)
     if params.dataset != 'pubmed':
-        gn_comm = get_girvan_newman_communities(graph)
-#    clique_comm = get_clique_communities(graph)
+
+    gn_comm, gn_mod = get_girvan_newman_communities(graph)
+    if params.dataset != 'polblogs':
+        clique_comm, clique_mod = get_clique_communities(graph)
 
     with open(f'{params.dataset}.txt', "w+") as f:
-        f.write(f"Greedy -- NMI={normalized_mutual_info_score(comm, greedy_comm, average_method='arithmetic')}; ARI={adjusted_rand_score(comm, greedy_comm)}\n")
+        f.write(f"Greedy -- NMI={normalized_mutual_info_score(comm, greedy_comm, average_method='arithmetic')}; ARI={adjusted_rand_score(comm, greedy_comm)}; Modularity={greedy_mod}\n")
         if params.dataset != 'pubmed':
-            f.write(f"Girvan-Newman -- NMI={normalized_mutual_info_score(comm, gn_comm, average_method='arithmetic')}; ARI={adjusted_rand_score(comm, gn_comm)}\n")
- #       f.write(f"Clique -- NMI={normalized_mutual_info_score(comm, clique_comm, average_method='arithmetic')}; ARI={adjusted_rand_score(comm, clique_comm)}\n")
+            f.write(f"Girvan-Newman -- NMI={normalized_mutual_info_score(comm, gn_comm, average_method='arithmetic')}; ARI={adjusted_rand_score(comm, gn_comm)}; Modularity={gn_mod}\n")
+        if params.dataset != 'polblogs':
+            f.write(f"Clique -- NMI={normalized_mutual_info_score(comm, clique_comm, average_method='arithmetic')}; ARI={adjusted_rand_score(comm, clique_comm)}; Modularity={clique_mod}\n")
 
 
 if __name__ == '__main__':
